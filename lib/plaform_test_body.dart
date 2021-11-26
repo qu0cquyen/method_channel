@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class PlatformTestBody extends StatefulWidget {
   const PlatformTestBody({Key? key}) : super(key: key);
@@ -8,43 +9,41 @@ class PlatformTestBody extends StatefulWidget {
 }
 
 class _PlatformTestBodyState extends State<PlatformTestBody> {
-  String nativeMessage = '';
+  static const platformMethodChannel =
+      MethodChannel('samples.flutter.dev/battery');
+
+  var batteryLevel = 'Unknown battery level';
+
+  Future<void> _getBatteryLevel() async {
+    late String batLevel;
+
+    try {
+      final int result =
+          await platformMethodChannel.invokeMethod('getBatteryLevel');
+      batLevel = 'Battery level at $result%';
+    } on PlatformException catch (e) {
+      batLevel = 'Failed to get battery level: ${e.message}.';
+    }
+
+    setState(() {
+      batteryLevel = batLevel;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: Colors.pinkAccent,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: <Widget>[
-          const Padding(
-            padding: EdgeInsets.only(left: 18.0, top: 200.0),
-            child: Text(
-              'Tap the button to change your life!',
-              style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w500,
-                  fontSize: 23.0),
+    return Material(
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            ElevatedButton(
+              child: const Text('Get Battery Level'),
+              onPressed: _getBatteryLevel,
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.only(left: 8.0, right: 8.0, top: 102.0),
-            child: ElevatedButton(
-              child: const Text('Click Me'),
-              onPressed: () => print(''),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.only(left: 8.0, right: 8.0, top: 102.0),
-            child: Text(
-              nativeMessage,
-              style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w500,
-                  fontSize: 23.0),
-            ),
-          )
-        ],
+            Text(batteryLevel),
+          ],
+        ),
       ),
     );
   }
